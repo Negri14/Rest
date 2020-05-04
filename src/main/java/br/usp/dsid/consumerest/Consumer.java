@@ -1,5 +1,8 @@
 package br.usp.dsid.consumerest;
 
+import java.net.URI;
+import java.util.Arrays;
+
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,14 +24,19 @@ public class Consumer {
 	}
 	
 	
-	public void getMethod(String name) {
+	public void getMethod(String country) {
 		
-		ResponseEntity<Country[]> response = restTemplate.getForEntity(String.format(URL_COUNTRY, name), Country[].class);
-		ResponseEntity<String> response2 = restTemplate.getForEntity(String.format(URL_COUNTRY, name), String.class);
-		
-		printResponse("GET", response);
-		System.out.println("\n"+response2.getBody());
+		ResponseEntity<Country[]> responseGFE = restTemplate.getForEntity(String.format(URL_COUNTRY, country), Country[].class);
 
+		System.out.println("status: "+responseGFE.getStatusCode()+"\n"+Arrays.toString(responseGFE.getBody()));
+		
+		String responseGFOS = restTemplate.getForObject(String.format(URL_COUNTRY, country), String.class);
+		
+		System.out.println("\n"+responseGFOS);
+		
+		ResponseEntity<String> responseGEx = restTemplate.exchange(String.format(URL_COUNTRY, country), HttpMethod.GET, null,  String.class);
+		
+		System.out.println("\nstatus: "+responseGEx.getStatusCode()+"\n"+responseGEx.getBody());
 
 	}
 	
@@ -37,14 +45,23 @@ public class Consumer {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity<JsonPlaceHolder> requestEntity = new HttpEntity<JsonPlaceHolder>(jsonPlaceHolder, headers);		
+				
+		ResponseEntity<JsonPlaceHolder> responsePFE = restTemplate.postForEntity(URL_JPH, requestEntity, JsonPlaceHolder.class);
 		
-		ResponseEntity<JsonPlaceHolder> response = restTemplate.exchange(URL_JPH, HttpMethod.POST, requestEntity, JsonPlaceHolder.class);
-		ResponseEntity<String> response2 = restTemplate.exchange(URL_JPH, HttpMethod.POST, requestEntity, String.class);
+		System.out.println("\nstatus: "+responsePFE.getStatusCode()+"\n"+responsePFE.getBody().toString());	
 		
-		printResponse("POST", response);
-		System.out.println("\n"+response2.getBody());
+		String responsePFO = restTemplate.postForObject(URL_JPH, requestEntity, String.class);
 		
-	}
+		System.out.println("\n"+responsePFO);	
+		
+		ResponseEntity<JsonPlaceHolder> responseEx = restTemplate.exchange(URL_JPH, HttpMethod.POST, requestEntity, JsonPlaceHolder.class);
+		
+		System.out.println("\nstatus: "+responseEx.getStatusCode()+"\n"+responseEx.getBody().toString());	
+
+
+
+		
+	} 
 	
 	public void putMethod(JsonPlaceHolder jsonPlaceHolder, String id) {
 		
@@ -53,30 +70,22 @@ public class Consumer {
 		HttpEntity<JsonPlaceHolder> requestEntity = new HttpEntity<JsonPlaceHolder>(jsonPlaceHolder, headers);		
 		
 		ResponseEntity<JsonPlaceHolder> response = restTemplate.exchange(String.format(URL_JPH_ID, id), HttpMethod.PUT, requestEntity, JsonPlaceHolder.class);
-		ResponseEntity<String> response2 = restTemplate.exchange(String.format(URL_JPH_ID, id), HttpMethod.PUT, requestEntity, String.class);
-
-		printResponse("PUT", response);
-		System.out.println("\n"+response2.getBody());
-
+		
+		System.out.println("\nstatus: "+response.getStatusCode()+"\n"+response.getBody().toString());	
+		
+		restTemplate.put(String.format(URL_JPH_ID, id), requestEntity);
+		
 	}
 	
 	public void deleteMethod(String id) {
 		
+		ResponseEntity<String> response = restTemplate.exchange(String.format(URL_JPH_ID, id), HttpMethod.DELETE, null, String.class);
+
+		System.out.println("\nstatus: "+response.getStatusCode()+"\n"+response.getBody().toString());	
+		
 		restTemplate.delete(String.format(URL_JPH_ID, id));
 		
-		System.out.println("DELETE");
 		
-	}
-	
-	public void printResponse(String httpMethod, ResponseEntity response) {
-		System.out.println("\n"+httpMethod+"\n\nstatus: "+response.getStatusCodeValue()+"\n");
-		
-		if (response.getBody() instanceof Country[]) {
-			for (Country c : (Country[]) response.getBody()) 
-				System.out.println(c.toString());
-		} else {
-			System.out.println(response.getBody().toString());
-		}
 	}
 	
 }
